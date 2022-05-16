@@ -2,8 +2,7 @@ import numpy as np
 import time
 
 
-def cma_es(y, sigma, fun):
-    p = 0
+def ma_es(y, sigma, fun):
     s = 0
     N = y.size
     initial_sigma = sigma
@@ -12,18 +11,14 @@ def cma_es(y, sigma, fun):
     mu = int(np.floor(offspring_size / 2))  # Number of best individuals
     w = np.full(N, 1.0 / mu)
     mu_eff = 1 / np.sum(w ** 2)
-    cp = (mu_eff / N + 4) / (2 * mu_eff / N + N + 4)
     cs = (mu_eff + 2) / (mu_eff + N + 5)
     alpha_cov = 2  # Can be in (0,2>
     c1 = alpha_cov / ((N + 1.3) ** 2 + mu_eff)
     cw = np.minimum(1 - c1, alpha_cov * (mu_eff + 1 / mu_eff - 2) / ((N + 2) ** 2 + alpha_cov * mu_eff / 2))
-    C = np.identity(N)
     best_values = []
+    M = np.identity(N)
 
     while True:
-        evalues, evectors = np.linalg.eig(C)
-        M = evectors @ np.diag(np.sqrt(evalues)) @ np.linalg.inv(evectors)
-
         solutions = []
         for i in range(offspring_size):
             z = np.random.randn(N)
@@ -48,10 +43,10 @@ def cma_es(y, sigma, fun):
         dd = [solution[3] for solution in solutions[:mu]]
 
         y += sigma * np.sum(w * dd, axis=0)
-        s = (1 - cs) * s + np.sqrt(mu_eff * cs * (2 - cs)) * np.sum(w * zz, axis=0)
-        p = (1 - cp) * p + np.sqrt(mu_eff * cp * (2 - cp)) * np.sum(w * dd, axis=0)
 
-        C = (1 - c1 - cw) * C + c1 * p * np.transpose(p) + cw * np.sum(w * dd * np.transpose(dd))
+        s = (1 - cs) * s + np.sqrt(mu_eff * cs * (2 - cs)) * np.sum(w * zz, axis=0)
+        I = np.identity(N)
+        M = M * (I + (c1 / 2) * (s * np.transpose(s) - I) + (cw / 2) * (np.sum(w * zz * np.transpose(zz)) - I))
 
         D = np.sqrt(N)
         sigma = sigma * np.exp((1 / 2 * D) * ((np.linalg.norm(s) ** 2) / N - 1))  # Change to Chi distribution
