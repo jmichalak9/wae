@@ -1,8 +1,8 @@
 import numpy as np
 import time
+from typing import Callable
 
-
-def ma_es(y, sigma, fun):
+def ma_es(y: np.array, sigma: float, fun: Callable[[float, float], float]):
     s = 0
     N = y.size
     initial_sigma = sigma
@@ -24,7 +24,7 @@ def ma_es(y, sigma, fun):
             z = np.random.randn(N)
             d = M @ z
             new_y = y + sigma * d
-            fitness = fun(*new_y)
+            fitness = fun(new_y)
             solutions.append((fitness, new_y, z, d))
 
         solutions.sort(key=lambda x: x[0], reverse=True)
@@ -60,3 +60,4 @@ def ma_es(y, sigma, fun):
         # Second stop condition
         if np.amax(best_values) - np.amin(best_values) < 10 ** -12:
             break
+    return np.amax(best_values)

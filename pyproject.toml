@@ -1,12 +1,15 @@
 [tool.poetry]
 name = "wae"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+description = "Comparing IPOP-MA-ES with CMA-ES using coco benchmark"
+authors = ["Jakub Michalak <michalakjakub1999@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "3.10.*"
+cocopp = "^2.6"
+scipy = "^1.8.0"
 numpy = "^1.22.3"
+cma = "^3.2.2"
 
 [tool.poetry.dev-dependencies]
 
