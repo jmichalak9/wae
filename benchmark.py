@@ -80,7 +80,7 @@ def random_search(f, lbounds, ubounds, evals):
 
 ### input (to be modified if necessary/desired)
 # fmin = scipy.optimize.fmin
-#fmin = scipy.optimize.fmin_slsqp
+# fmin = scipy.optimize.fmin_slsqp
 # fmin = scipy.optimize.fmin_cobyla
 # fmin = cocoex.solvers.random_search
 # fmin = cma.fmin2
@@ -149,7 +149,7 @@ for batch_counter, problem in enumerate(suite):  # this loop may take hours or d
         if 11 < 3:  # add solver to investigate here
             pass
         elif fmin is scipy.optimize.fmin:
-            output = fmin(problem, propose_x0(), maxfun=evalsleft(), disp=False, full_output=True)
+            output = fmin(problem, propose_x0(), max_iterations=evalsleft(), disp=False, full_output=True)
             stoppings[problem.index].append(output[4])
         elif fmin is scipy.optimize.fmin_slsqp:
             output = fmin(problem, propose_x0(), iter=int(evalsleft() / problem.dimension + 1),  # very approximate way to respect budget
@@ -163,10 +163,10 @@ for batch_counter, problem in enumerate(suite):  # this loop may take hours or d
                             {'maxfevals':evalsleft(), 'verbose':-9}, restarts=9)
             stoppings[problem.index].append(es.stop())
         elif fmin is scipy.optimize.fmin_cobyla:
-            fmin(problem, propose_x0(), lambda x: -problem.constraint(x), maxfun=evalsleft(),
+            fmin(problem, propose_x0(), lambda x: -problem.constraint(x), max_iterations=evalsleft(),
                  disp=0, rhoend=1e-9)
         elif fmin is CMAES().calculate:
-            output = fmin(propose_x0(), 5, problem, maxfun=evalsleft())
+            output = fmin(propose_x0(), 5, problem, max_iterations=evalsleft())
             stoppings[problem.index].append(output)
 
     timings[problem.dimension].append((time.time() - time1) / problem.evaluations

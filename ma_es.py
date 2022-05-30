@@ -1,63 +1,53 @@
 import numpy as np
-import time
-from typing import Callable
+from cma_es import CMAES
 
-def ma_es(y: np.array, sigma: float, fun: Callable[[float, float], float]):
-    s = 0
-    N = y.size
-    initial_sigma = sigma
-    offspring_size = int(4 + 3 * np.floor(np.log(N)))
-    generation_length = int(10 + np.ceil(30 * N / offspring_size))
-    mu = int(np.floor(offspring_size / 2))  # Number of best individuals
-    w = np.full(N, 1.0 / mu)
-    mu_eff = 1 / np.sum(w ** 2)
-    cs = (mu_eff + 2) / (mu_eff + N + 5)
-    alpha_cov = 2  # Can be in (0,2>
-    c1 = alpha_cov / ((N + 1.3) ** 2 + mu_eff)
-    cw = np.minimum(1 - c1, alpha_cov * (mu_eff + 1 / mu_eff - 2) / ((N + 2) ** 2 + alpha_cov * mu_eff / 2))
-    best_values = []
-    M = np.identity(N)
 
-    while True:
-        solutions = []
-        for i in range(offspring_size):
-            z = np.random.randn(N)
-            d = M @ z
-            new_y = y + sigma * d
-            fitness = fun(new_y)
-            solutions.append((fitness, new_y, z, d))
+class IPOPMAES(CMAES):
 
-        solutions.sort(key=lambda x: x[0], reverse=True)
+    def calculate(self, y, sigma, fun, max_iterations: int):
+        s = 0
+        initial_sigma = sigma
+        best_values = []
+        M = np.identity(self.N)
+        iteration = 0
 
-        fitness_values = [solution[0] for solution in solutions]
+        while True:
+            solutions = []
+            for i in range(self.offspring_size):
+                z = np.random.randn(self.N)
+                d = M @ z
+                new_y = y + sigma * d
+                fitness = fun(new_y)
+                solutions.append((fitness, new_y, z, d))
 
-        # Remember 'generation_length' maximum and minimum values
-        if len(best_values) == generation_length * 2:
-            best_values.pop(0)
-            best_values.pop(0)
+            solutions.sort(key=lambda x: x[0], reverse=True)
 
-        best_values.append(np.amin(fitness_values))
-        best_values.append(np.amax(fitness_values))
+            fitness_values = [solution[0] for solution in solutions]
 
-        zz = [solution[2] for solution in solutions[:mu]]
-        dd = [solution[3] for solution in solutions[:mu]]
+            # Remember 'generation_length' maximum and minimum values
+            if len(best_values) == self.generation_length * 2:
+                best_values.pop(0)
+                best_values.pop(0)
 
-        y += sigma * np.sum(w * dd, axis=0)
+            best_values.append(np.amin(fitness_values))
+            best_values.append(np.amax(fitness_values))
 
-        s = (1 - cs) * s + np.sqrt(mu_eff * cs * (2 - cs)) * np.sum(w * zz, axis=0)
-        I = np.identity(N)
-        M = M * (I + (c1 / 2) * (s * np.transpose(s) - I) + (cw / 2) * (np.sum(w * zz * np.transpose(zz)) - I))
+            zz = np.array([solution[2] for solution in solutions[:self.mu]])
+            dd = np.array([solution[3] for solution in solutions[:self.mu]])
 
-        D = np.sqrt(N)
-        sigma = sigma * np.exp((1 / 2 * D) * ((np.linalg.norm(s) ** 2) / N - 1))  # Change to Chi distribution
+            y += sigma * self.recombination(dd)
 
-        print([solution[0] for solution in solutions[:mu]])
+            s = (1 - self.cs) * s + np.sqrt(self.mu_eff * self.cs * (2 - self.cs)) * self.recombination(zz)
+            I = np.identity(self.N)
+            M = M.dot((I + (self.c1 / 2) * (s * (np.transpose(s)) - I) + (self.cw / 2) *
+                     (self.recombination_with_transposition(zz) - I)))
 
-        # First stop condition
-        if sigma < initial_sigma * 10 ** -12:
-            break
+            sigma *= np.exp(self.cs / self.damping * (np.linalg.norm(s) / self.chi_n - 1))
 
-        # Second stop condition
-        if np.amax(best_values) - np.amin(best_values) < 10 ** -12:
-            break
-    return np.amax(best_values)
+            print(solutions[0][0])
+
+            if sigma < initial_sigma * 10 ** -12 or \
+                    np.amax(best_values) - np.amin(best_values) < 10 ** -12 or \
+                    iteration >= max_iterations:
+                return np.amin(best_values)
+            iteration += 1

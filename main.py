@@ -1,12 +1,13 @@
 
 from cma_es import CMAES
 import numpy as np
-import math
 
 
 # Press the green button in the gutter to run the script.
+from ma_es import IPOPMAES
+
 if __name__ == '__main__':
-    cmaes = CMAES()
-    cmaes.calculate(np.array([10.0, 10.0, 10.0]), 5, lambda x, y, z: -(x * y * z) ** 2, 10000)
+    cmaes = CMAES(5)
+    cmaes.calculate(np.array([10.0, 10.0, 10.0, 10.0, 10.0]), 5, lambda x: -(np.prod(x)) ** 2, 500)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

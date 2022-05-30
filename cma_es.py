@@ -1,26 +1,47 @@
 import numpy as np
 
+
 class CMAES:
 
-    @staticmethod
-    def calculate(y, sigma, fun, maxfun: int):
+    def __init__(self, N):
+        self.N = N
+        self.offspring_size = int(4.0 + 3.0 * np.floor(np.log(N)))
+        self.generation_length = int(10.0 + np.ceil(30.0 * N / self.offspring_size))
+        self.mu = int(np.floor(self.offspring_size / 2.0))  # Number of best individuals
+        self.w = np.full(self.mu, 1.0 / self.mu)
+        self.mu_eff = 1.0 / np.sum(self.w ** 2.0)
+        self.cp = (self.mu_eff / N + 4.0) / (2.0 * self.mu_eff / N + N + 4.0)
+        self.cs = (self.mu_eff + 2.0) / (self.mu_eff + N + 5.0)
+        self.alpha_cov = 2.0  # Can be in (0,2>
+        self.c1 = self.alpha_cov / ((N + 1.3) ** 2 + self.mu_eff)
+        self.cw = np.minimum(1.0 - self.c1, self.alpha_cov *
+                             (self.mu_eff + 1.0 / self.mu_eff - 2.0) / ((N + 2.0) ** 2 + self.alpha_cov * self.mu_eff / 2.0))
+        # mean of chi distribution with N degrees of freedom using Stirling's approximation
+        self.chi_n = np.sqrt(N) * (1.0 - 1.0 / (4.0 * N) + 1.0 / (21.0 * N ** 2))
+        self.damping = 1 + self.cs + 2.0 * np.maximum(0.0, np.sqrt((self.mu_eff - 1.0) / (N + 1.0)) - 1.0)
+
+    def recombination(self, vectors):
+        new_vectors = []
+        for i in range(self.mu):
+            new_vectors.append(self.w[i] * vectors[i])
+
+        return np.sum(new_vectors, axis=0)
+
+    def recombination_with_transposition(self, vectors):
+        assert len(vectors) == self.mu
+        recombination = 0.0
+        for i in range(self.mu):
+            recombination += self.w[i] * vectors[i].dot(np.transpose(vectors[i]))
+
+        return recombination
+
+    def calculate(self, y, sigma, fun, max_iterations: int):
         p = 0
         s = 0
-        N = y.size
-        initial_sigma = sigma
-        offspring_size = int(4 + 3 * np.floor(np.log(N)))
-        generation_length = int(10 + np.ceil(30 * N / offspring_size))
-        mu = int(np.floor(offspring_size / 2))  # Number of best individuals
-        w = np.full(N, 1.0 / mu)
-        mu_eff = 1 / np.sum(w ** 2)
-        cp = (mu_eff / N + 4) / (2 * mu_eff / N + N + 4)
-        cs = (mu_eff + 2) / (mu_eff + N + 5)
-        alpha_cov = 2  # Can be in (0,2>
-        c1 = alpha_cov / ((N + 1.3) ** 2 + mu_eff)
-        cw = np.minimum(1 - c1, alpha_cov * (mu_eff + 1 / mu_eff - 2) / ((N + 2) ** 2 + alpha_cov * mu_eff / 2))
-        covariance_matrix = np.identity(N)
+        covariance_matrix = np.identity(self.N)
         best_values = []
-        maxfun_counter = 0
+        initial_sigma = sigma
+        iteration = 0
 
         while True:
             # Eigen decomposition
@@ -29,8 +50,8 @@ class CMAES:
             D = np.sqrt(np.where(eigenvalues < 0, 10 ** -8, eigenvalues))
 
             solutions = []
-            for i in range(offspring_size):
-                z = np.random.randn(N)  # ~N(0, I)
+            for i in range(self.offspring_size):
+                z = np.random.randn(self.N)  # ~N(0, I)
                 d = B.dot(np.diag(D)).dot(z)
                 new_y = y + sigma * d  # ~N(m, C * sigma^2)
                 fitness = fun(new_y)
@@ -41,34 +62,30 @@ class CMAES:
             fitness_values = [solution[0] for solution in solutions]
 
             # Remember 'generation_length' maximum and minimum values
-            if len(best_values) == generation_length * 2:
+            if len(best_values) == self.generation_length * 2:
                 best_values.pop(0)
                 best_values.pop(0)
 
             best_values.append(np.amin(fitness_values))
             best_values.append(np.amax(fitness_values))
 
-            zz = np.array([solution[2] for solution in solutions[:mu]])
-            dd = np.array([solution[3] for solution in solutions[:mu]])
+            zz = np.array([solution[2] for solution in solutions[:self.mu]])
+            dd = np.array([solution[3] for solution in solutions[:self.mu]])
 
-            y += sigma * np.sum(w * dd, axis=0)
-            s = (1 - cs) * s + np.sqrt(mu_eff * cs * (2 - cs)) * np.sum(w * zz, axis=0)
-            p = (1 - cp) * p + np.sqrt(mu_eff * cp * (2 - cp)) * np.sum(w * dd, axis=0)
+            y += sigma * self.recombination(zz)
+            s = (1 - self.cs) * s + np.sqrt(self.mu_eff * self.cs * (2 - self.cs)) * self.recombination(zz)
+            p = (1 - self.cp) * p + np.sqrt(self.mu_eff * self.cp * (2 - self.cp)) * self.recombination(dd)
 
-            covariance_matrix = (1 - c1 - cw) * covariance_matrix +\
-                                c1 * p.dot(np.transpose(p)) +\
-                                cw * np.sum(w * dd.dot(np.transpose(dd)))
+            covariance_matrix = (1 - self.c1 - self.cw) * covariance_matrix + \
+                                self.c1 * p.dot(np.transpose(p)) + \
+                                self.cw * self.recombination_with_transposition(dd)
 
-            # mean of chi distribution with N degrees of freedom using Stirling's approximation
-            chi_n = np.sqrt(N) * (1 - 1 / (4 * N) + 1 / (21 * N**2))
-            damping = 1 + cs + 2 * np.maximum(0, np.sqrt((mu_eff - 1) / (N + 1)) - 1)
+            sigma *= np.exp(self.cs / self.damping * (np.linalg.norm(s) / self.chi_n - 1))
 
-            sigma *= np.exp(cs / damping * (np.linalg.norm(s) / chi_n - 1))
-
-            #print([solution[0] for solution in solutions[:mu]])
+            print(solutions[0][0])
 
             if sigma < initial_sigma * 10 ** -12 or \
                     np.amax(best_values) - np.amin(best_values) < 10 ** -12 or \
-                    maxfun_counter >= maxfun:
+                    iteration >= max_iterations:
                 return np.amin(best_values)
-            maxfun_counter += 1
+            iteration += 1
