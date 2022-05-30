@@ -48,8 +48,8 @@ class CMAES:
             best_values.append(np.amin(fitness_values))
             best_values.append(np.amax(fitness_values))
 
-            zz = [solution[2] for solution in solutions[:mu]]
-            dd = [solution[3] for solution in solutions[:mu]]
+            zz = np.array([solution[2] for solution in solutions[:mu]])
+            dd = np.array([solution[3] for solution in solutions[:mu]])
 
             y += sigma * np.sum(w * dd, axis=0)
             s = (1 - cs) * s + np.sqrt(mu_eff * cs * (2 - cs)) * np.sum(w * zz, axis=0)
@@ -57,7 +57,7 @@ class CMAES:
 
             covariance_matrix = (1 - c1 - cw) * covariance_matrix +\
                                 c1 * p * np.transpose(p) +\
-                                cw * np.sum(w * dd * np.transpose(dd))
+                                cw * np.sum(w * dd.dot(np.transpose(dd)))
 
             # mean of chi distribution with N degrees of freedom using Stirling's approximation
             chi_n = np.sqrt(N) * (1 - 1 / (4 * N) + 1 / (21 * N**2))
