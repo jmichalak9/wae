@@ -1,6 +1,7 @@
 import numpy as np
 
 class CMAES:
+
     @staticmethod
     def calculate(y, sigma, fun, maxfun: int):
         p = 0
@@ -55,7 +56,7 @@ class CMAES:
             p = (1 - cp) * p + np.sqrt(mu_eff * cp * (2 - cp)) * np.sum(w * dd, axis=0)
 
             covariance_matrix = (1 - c1 - cw) * covariance_matrix +\
-                                c1 * p * np.transpose(p) +\
+                                c1 * p.dot(np.transpose(p)) +\
                                 cw * np.sum(w * dd.dot(np.transpose(dd)))
 
             # mean of chi distribution with N degrees of freedom using Stirling's approximation
