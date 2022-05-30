@@ -1,10 +1,8 @@
 import numpy as np
 
-
 class CMAES:
-
     @staticmethod
-    def calculate(y, sigma, fun):
+    def calculate(y, sigma, fun, maxfun: int):
         p = 0
         s = 0
         N = y.size
@@ -21,6 +19,7 @@ class CMAES:
         cw = np.minimum(1 - c1, alpha_cov * (mu_eff + 1 / mu_eff - 2) / ((N + 2) ** 2 + alpha_cov * mu_eff / 2))
         covariance_matrix = np.identity(N)
         best_values = []
+        maxfun_counter = 0
 
         while True:
             # Eigen decomposition
@@ -33,7 +32,7 @@ class CMAES:
                 z = np.random.randn(N)  # ~N(0, I)
                 d = B.dot(np.diag(D)).dot(z)
                 new_y = y + sigma * d  # ~N(m, C * sigma^2)
-                fitness = fun(*new_y)
+                fitness = fun(new_y)
                 solutions.append((fitness, new_y, z, d))
 
             solutions.sort(key=lambda x: x[0], reverse=True)
@@ -65,12 +64,10 @@ class CMAES:
 
             sigma *= np.exp(cs / damping * (np.linalg.norm(s) / chi_n - 1))
 
-            print([solution[0] for solution in solutions[:mu]])
+            #print([solution[0] for solution in solutions[:mu]])
 
-            # First stop condition
-            if sigma < initial_sigma * 10 ** -12:
+            if sigma < initial_sigma * 10 ** -12 or \
+                    np.amax(best_values) - np.amin(best_values) < 10 ** -12 or \
+                    maxfun_counter >= maxfun:
                 return np.amin(best_values)
-
-            # Second stop condition
-            if np.amax(best_values) - np.amin(best_values) < 10 ** -12:
-                return np.amin(best_values)
+            maxfun_counter += 1

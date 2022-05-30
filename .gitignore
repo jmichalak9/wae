@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Coco framework
+coco/
+
+# IDE cache
+.idea/
