@@ -23,12 +23,16 @@ class CMAES:
         best_values = []
 
         while True:
-            square_root = np.linalg.cholesky(covariance_matrix)
+            # Eigen decomposition
+            tmp = (covariance_matrix + np.transpose(covariance_matrix)) / 2
+            eigenvalues, B = np.linalg.eigh(tmp)
+            D = np.sqrt(np.where(eigenvalues < 0, 10 ** -8, eigenvalues))
+
             solutions = []
             for i in range(offspring_size):
-                z = np.random.randn(N)
-                d = square_root @ z
-                new_y = y + sigma * d
+                z = np.random.randn(N)  # ~N(0, I)
+                d = B.dot(np.diag(D)).dot(z)
+                new_y = y + sigma * d  # ~N(m, C * sigma^2)
                 fitness = fun(*new_y)
                 solutions.append((fitness, new_y, z, d))
 
@@ -51,7 +55,9 @@ class CMAES:
             s = (1 - cs) * s + np.sqrt(mu_eff * cs * (2 - cs)) * np.sum(w * zz, axis=0)
             p = (1 - cp) * p + np.sqrt(mu_eff * cp * (2 - cp)) * np.sum(w * dd, axis=0)
 
-            covariance_matrix = (1 - c1 - cw) * covariance_matrix + c1 * p * np.transpose(p) + cw * np.sum(w * dd * np.transpose(dd))
+            covariance_matrix = (1 - c1 - cw) * covariance_matrix +\
+                                c1 * p * np.transpose(p) +\
+                                cw * np.sum(w * dd * np.transpose(dd))
 
             # mean of chi distribution with N degrees of freedom using Stirling's approximation
             chi_n = np.sqrt(N) * (1 - 1 / (4 * N) + 1 / (21 * N**2))
