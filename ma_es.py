@@ -2,7 +2,26 @@ import numpy as np
 from cma_es import CMAES
 
 
-class IPOPMAES(CMAES):
+class MAES(CMAES):
+
+    def __init__(self, N, offspring_size: int, display_result=False):
+        self.display = display_result
+        self.N = N
+        self.offspring_size = offspring_size
+        self.generation_length = int(10.0 + np.ceil(30.0 * N / self.offspring_size))
+        self.mu = int(np.floor(self.offspring_size / 2.0))  # Number of best individuals
+        self.w = np.full(self.mu, 1.0 / self.mu)
+        self.mu_eff = 1.0 / np.sum(self.w ** 2.0)
+        self.cp = (self.mu_eff / N + 4.0) / (2.0 * self.mu_eff / N + N + 4.0)
+        self.cs = (self.mu_eff + 2.0) / (self.mu_eff + N + 5.0)
+        self.alpha_cov = 2.0  # Can be in (0,2>
+        self.c1 = self.alpha_cov / ((N + 1.3) ** 2 + self.mu_eff)
+        self.cw = np.minimum(1.0 - self.c1, self.alpha_cov *
+                             (self.mu_eff + 1.0 / self.mu_eff - 2.0) / (
+                                         (N + 2.0) ** 2 + self.alpha_cov * self.mu_eff / 2.0))
+        # mean of chi distribution with N degrees of freedom using Stirling's approximation
+        self.chi_n = np.sqrt(N) * (1.0 - 1.0 / (4.0 * N) + 1.0 / (21.0 * N ** 2))
+        self.damping = 1 + self.cs + 2.0 * np.maximum(0.0, np.sqrt((self.mu_eff - 1.0) / (N + 1.0)) - 1.0)
 
     def calculate(self, y, sigma, fun, max_iterations: int):
         s = 0
