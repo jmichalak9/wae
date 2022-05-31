@@ -39,8 +39,8 @@ class IPOPMAES(CMAES):
 
             s = (1 - self.cs) * s + np.sqrt(self.mu_eff * self.cs * (2 - self.cs)) * self.recombination(zz)
             I = np.identity(self.N)
-            M = M.dot((I + (self.c1 / 2) * (s * (np.transpose(s)) - I) + (self.cw / 2) *
-                     (self.recombination_with_transposition(zz) - I)))
+            M = M @ (I + (self.c1 / 2) * (np.outer(s, s.T) - I) + (self.cw / 2) *
+                     (self.recombination_with_transposition(zz) - I))
 
             sigma *= np.exp(self.cs / self.damping * (np.linalg.norm(s) / self.chi_n - 1))
 
