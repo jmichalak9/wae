@@ -13,7 +13,7 @@ class IPOPMAES():
         population = initial_population
 
         while population < initial_population * self.max_population_size:
-            result = MAES(len(y), population).calculate(y, sigma, fun, max_iterations)
+            result = MAES(N, population).calculate(y, sigma, fun, max_iterations)
             if result < best_result:
                 best_result = result
                 best_population_size = population

@@ -46,7 +46,7 @@ class CMAES:
 
         while True:
             # Eigen decomposition
-            tmp = (covariance_matrix + np.transpose(covariance_matrix)) / 2
+            tmp = (covariance_matrix + covariance_matrix.T) / 2
             eigenvalues, B = np.linalg.eigh(tmp)
             D = np.sqrt(np.where(eigenvalues < 0, 10 ** -8, eigenvalues))
 

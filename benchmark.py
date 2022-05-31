@@ -92,8 +92,9 @@ def ipop_maes(x0, problem, max_iterations):
 # fmin = scipy.optimize.fmin_cobyla
 # fmin = cocoex.solvers.random_search
 # fmin = cma.fmin2
-fmin = cmaes
-#fmin = ipop_maes
+
+#fmin = cmaes
+fmin = ipop_maes
 
 
 suite_name = "bbob"  # see cocoex.known_suite_names
@@ -174,7 +175,7 @@ for batch_counter, problem in enumerate(suite):  # this loop may take hours or d
         elif fmin is scipy.optimize.fmin_cobyla:
             fmin(problem, propose_x0(), lambda x: -problem.constraint(x), max_iterations=evalsleft(),
                  disp=0, rhoend=1e-9)
-        elif fmin is cmaes:
+        elif fmin is cmaes or fmin is ipop_maes:
             output = fmin(propose_x0(), problem, max_iterations=evalsleft())
             stoppings[problem.index].append(output)
 
