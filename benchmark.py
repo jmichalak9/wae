@@ -78,13 +78,17 @@ def random_search(f, lbounds, ubounds, evals):
     [f(x) for x in np.asarray(lbounds) + (np.asarray(ubounds) - lbounds)
                                * np.random.rand(int(evals), len(ubounds))]
 
+
+def cmaes(x0, problem, max_iterations):
+    return CMAES(len(x0)).calculate(x0, 5, problem, max_iterations)
+
 ### input (to be modified if necessary/desired)
 # fmin = scipy.optimize.fmin
 # fmin = scipy.optimize.fmin_slsqp
 # fmin = scipy.optimize.fmin_cobyla
 # fmin = cocoex.solvers.random_search
 # fmin = cma.fmin2
-fmin = CMAES().calculate
+fmin = cmaes
 
 
 suite_name = "bbob"  # see cocoex.known_suite_names
@@ -165,8 +169,8 @@ for batch_counter, problem in enumerate(suite):  # this loop may take hours or d
         elif fmin is scipy.optimize.fmin_cobyla:
             fmin(problem, propose_x0(), lambda x: -problem.constraint(x), max_iterations=evalsleft(),
                  disp=0, rhoend=1e-9)
-        elif fmin is CMAES().calculate:
-            output = fmin(propose_x0(), 5, problem, max_iterations=evalsleft())
+        elif fmin is cmaes:
+            output = fmin(propose_x0(), problem, max_iterations=evalsleft())
             stoppings[problem.index].append(output)
 
     timings[problem.dimension].append((time.time() - time1) / problem.evaluations

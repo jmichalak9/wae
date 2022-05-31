@@ -44,7 +44,8 @@ class IPOPMAES(CMAES):
 
             sigma *= np.exp(self.cs / self.damping * (np.linalg.norm(s) / self.chi_n - 1))
 
-            print(solutions[0][0])
+            if self.display:
+                print(solutions[0][0])
 
             if sigma < initial_sigma * 10 ** -12 or \
                     np.amax(best_values) - np.amin(best_values) < 10 ** -12 or \

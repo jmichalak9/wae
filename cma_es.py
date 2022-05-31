@@ -3,7 +3,8 @@ import numpy as np
 
 class CMAES:
 
-    def __init__(self, N):
+    def __init__(self, N, display_result=False):
+        self.display = display_result
         self.N = N
         self.offspring_size = int(4.0 + 3.0 * np.floor(np.log(N)))
         self.generation_length = int(10.0 + np.ceil(30.0 * N / self.offspring_size))
@@ -31,7 +32,7 @@ class CMAES:
         assert len(vectors) == self.mu
         recombination = 0.0
         for i in range(self.mu):
-            recombination += self.w[i] * vectors[i].dot(np.transpose(vectors[i]))
+            recombination += self.w[i] * vectors[i].dot(vectors[i].T)
 
         return recombination
 
@@ -77,12 +78,13 @@ class CMAES:
             p = (1 - self.cp) * p + np.sqrt(self.mu_eff * self.cp * (2 - self.cp)) * self.recombination(dd)
 
             covariance_matrix = (1 - self.c1 - self.cw) * covariance_matrix + \
-                                self.c1 * p.dot(np.transpose(p)) + \
+                                self.c1 * p.dot(p.T) + \
                                 self.cw * self.recombination_with_transposition(dd)
 
             sigma *= np.exp(self.cs / self.damping * (np.linalg.norm(s) / self.chi_n - 1))
 
-            print(solutions[0][0])
+            if self.display:
+                print(solutions[0][0])
 
             if sigma < initial_sigma * 10 ** -12 or \
                     np.amax(best_values) - np.amin(best_values) < 10 ** -12 or \
