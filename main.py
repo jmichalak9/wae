@@ -7,6 +7,7 @@ import numpy as np
 from ipop_ma_es import IPOPMAES
 
 if __name__ == '__main__':
-    IPOPMAES().calculate(np.array([2.0, 2.0, 2.0, 2.0, 2.0]), 5, lambda x: -(np.prod(x)) ** 2, 500)
-
+    #IPOPMAES().calculate(np.array([2.0, 2.0, 2.0, 2.0, 2.0]), 5, lambda x: -(np.prod(x)) ** 2, 500)
+    y = np.array([2.0, 2.0, 2.0, 2.0, 2.0])
+    CMAES(len(y)).calculate(y, 1, lambda x: -(np.prod(x)) ** 2, 500)
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

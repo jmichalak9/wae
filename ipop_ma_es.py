@@ -3,7 +3,7 @@ import numpy as np
 
 
 class IPOPMAES():
-    max_population_size = 2 ** 6
+    max_population_size = 2 ** 5
 
     def calculate(self, y, sigma, fun, max_iterations: int):
         N = len(y)

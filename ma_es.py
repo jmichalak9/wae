@@ -19,6 +19,7 @@ class MAES(CMAES):
         self.cw = np.minimum(1.0 - self.c1, self.alpha_cov *
                              (self.mu_eff + 1.0 / self.mu_eff - 2.0) / (
                                          (N + 2.0) ** 2 + self.alpha_cov * self.mu_eff / 2.0))
+
         # mean of chi distribution with N degrees of freedom using Stirling's approximation
         self.chi_n = np.sqrt(N) * (1.0 - 1.0 / (4.0 * N) + 1.0 / (21.0 * N ** 2))
         self.damping = 1 + self.cs + 2.0 * np.maximum(0.0, np.sqrt((self.mu_eff - 1.0) / (N + 1.0)) - 1.0)

@@ -1,5 +1,8 @@
+import warnings
+
 import numpy as np
 
+warnings.filterwarnings('ignore')
 
 class CMAES:
 
@@ -39,24 +42,25 @@ class CMAES:
     def calculate(self, y, sigma, fun, max_iterations: int):
         p = 0
         s = 0
-        covariance_matrix = np.identity(self.N)
         best_values = []
         initial_sigma = sigma
         iteration = 0
 
-        while True:
-            # Eigen decomposition
-            tmp = (covariance_matrix + covariance_matrix.T) / 2
-            eigenvalues, B = np.linalg.eigh(tmp)
-            D = np.sqrt(np.where(eigenvalues < 0, 10 ** -8, eigenvalues))
+        B = np.eye(self.N)
+        D = np.eye(self.N)
+        covariance_matrix = B @ D @ (B @ D).T
+        eigeneval = 0
 
+        counteval = 0
+        while True:
             solutions = []
             for i in range(self.offspring_size):
                 z = np.random.randn(self.N)  # ~N(0, I)
-                d = B.dot(np.diag(D)).dot(z)
+                d = B @ D @ z
                 new_y = y + sigma * d  # ~N(m, C * sigma^2)
                 fitness = fun(new_y)
                 solutions.append((fitness, new_y, z, d))
+                counteval = counteval + 1
 
             solutions.sort(key=lambda x: x[0], reverse=True)
 
@@ -75,13 +79,23 @@ class CMAES:
 
             y += sigma * self.recombination(dd)
             s = (1 - self.cs) * s + np.sqrt(self.mu_eff * self.cs * (2 - self.cs)) * self.recombination(zz)
+
+            with np.errstate(divide='ignore'):
+                hsig = np.linalg.norm(s) / np.sqrt(1 - (1 - s) ** (2 * counteval / self.offspring_size)) / self.chi_n < 1.4+2 / (self.N+1)
             p = (1 - self.cp) * p + np.sqrt(self.mu_eff * self.cp * (2 - self.cp)) * self.recombination(dd)
 
             covariance_matrix = (1 - self.c1 - self.cw) * covariance_matrix + \
                                 self.c1 * np.outer(p, p.T) + \
+                                (1 - hsig) * self.cp * (2 - self.cp) * covariance_matrix + \
                                 self.cw * self.recombination_with_transposition(dd)
 
             sigma *= np.exp(self.cs / self.damping * (np.linalg.norm(s) / self.chi_n - 1))
+
+            if counteval - eigeneval > self.offspring_size / (self.cw + self.c1) / self.N / 10:
+                eigeneval = counteval
+                covariance_matrix = np.triu(covariance_matrix) + np.triu(covariance_matrix, 1)
+                B, D = np.linalg.eigh(covariance_matrix)
+                D = np.diag(np.sqrt(np.diag(D)))
 
             if self.display:
                 print(solutions[0][0])

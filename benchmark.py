@@ -81,7 +81,7 @@ def random_search(f, lbounds, ubounds, evals):
 
 
 def cmaes(x0, problem, max_iterations):
-    return CMAES(len(x0)).calculate(x0, 5, problem, max_iterations)
+    return CMAES(len(x0)).calculate(x0, 1, problem, max_iterations)
 
 def ipop_maes(x0, problem, max_iterations):
     return IPOPMAES().calculate(x0, 5, problem, max_iterations)
@@ -91,7 +91,7 @@ def ipop_maes(x0, problem, max_iterations):
 # fmin = scipy.optimize.fmin_slsqp
 # fmin = scipy.optimize.fmin_cobyla
 # fmin = cocoex.solvers.random_search
-# fmin = cma.fmin2
+#fmin = cma.fmin2
 
 #fmin = cmaes
 fmin = ipop_maes
