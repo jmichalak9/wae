@@ -10,6 +10,7 @@ cocopp = "^2.6"
 scipy = "^1.8.0"
 numpy = "^1.22.3"
 cma = "^3.2.2"
+pylint = "^2.14.3"
 
 [tool.poetry.dev-dependencies]
 

@@ -1,25 +1,27 @@
+"""This module contains implementation of IPOP-MA-ES"""
 from ma_es import MAES
 import numpy as np
 
 
 class IPOPMAES():
-    max_population_size = 2 ** 5
+  """Implementation of IPOP-MA-ES"""
 
-    def __init__(self, seed):
-        self.seed = seed
+  max_population_size = 2 ** 5
 
-    def calculate(self, y, sigma, fun, max_iterations: int):
-        N = len(y)
-        best_result = float('inf')
-        best_population_size = float('inf')
-        initial_population = int(4.0 + np.floor(3.0 * np.log(N)))
-        population = initial_population
+  def __init__(self, seed):
+    self.seed = seed
 
-        while population < initial_population * self.max_population_size:
-            result = MAES(N, population, self.seed).calculate(y, sigma, fun, max_iterations)
-            if result < best_result:
-                best_result = result
-                best_population_size = population
+  def calculate(self, y, sigma, fun, max_iterations: int):
+    N = len(y)
+    best_result = float('inf')
+    initial_population = int(4.0 + np.floor(3.0 * np.log(N)))
+    population = initial_population
 
-            population *= 2
-        return best_result
+    while population < initial_population * self.max_population_size:
+      result = MAES(N, population, self.seed).calculate(y, sigma, fun,
+                                                        max_iterations)
+      if result < best_result:
+        best_result = result
+
+      population *= 2
+    return best_result
