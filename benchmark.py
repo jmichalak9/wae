@@ -84,7 +84,7 @@ def cmaes(x0, problem, max_iterations):
     return CMAES(len(x0)).calculate(x0, 1, problem, max_iterations)
 
 def ipop_maes(x0, problem, max_iterations):
-    return IPOPMAES().calculate(x0, 5, problem, max_iterations)
+    return IPOPMAES().calculate(x0, 1, problem, max_iterations)
 
 ### input (to be modified if necessary/desired)
 # fmin = scipy.optimize.fmin
@@ -92,10 +92,17 @@ def ipop_maes(x0, problem, max_iterations):
 # fmin = scipy.optimize.fmin_cobyla
 # fmin = cocoex.solvers.random_search
 #fmin = cma.fmin2
+import sys
+if len(sys.argv) != 2:
+    sys.exit("call with exactly 1 argument: cmaes or ipop-maes")
 
-#fmin = cmaes
-fmin = ipop_maes
-
+algorithm = sys.argv[1]
+if algorithm == "cmaes":
+    fmin = cmaes
+elif algorithm == "ipop-maes":
+    fmin = ipop_maes
+else:
+    sys.exit(f"chosen algorithm '{algorithm}' is not 'cmaes' nor 'ipop-maes'")
 
 suite_name = "bbob"  # see cocoex.known_suite_names
 budget_multiplier = 2  # times dimension, increase to 10, 100, ...
@@ -116,7 +123,8 @@ if __name__ == "__main__":
         print(__doc__)
         raise ValueError("printed help and aborted")
     input_params = cocoex.utilities.args_to_dict(
-        sys.argv[1:], globals(), {'batch': 'current_batch/batches'}, print=print)
+        # this is 2 because we use first argv to determine the algorithm
+        sys.argv[2:], globals(), {'batch': 'current_batch/batches'}, print=print)
     globals().update(input_params)  # (re-)assign variables
 
 # extend output folder input parameter, comment out if desired otherwise
