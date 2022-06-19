@@ -4,7 +4,8 @@ from cma_es import CMAES
 
 class MAES(CMAES):
 
-    def __init__(self, N, offspring_size: int, display_result=False):
+    def __init__(self, N, offspring_size: int, seed: int, display_result=False):
+        np.random.seed(seed)
         self.display = display_result
         self.N = N
         self.offspring_size = offspring_size

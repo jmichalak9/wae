@@ -5,6 +5,9 @@ import numpy as np
 class IPOPMAES():
     max_population_size = 2 ** 5
 
+    def __init__(self, seed):
+        self.seed = seed
+
     def calculate(self, y, sigma, fun, max_iterations: int):
         N = len(y)
         best_result = float('inf')
@@ -13,7 +16,7 @@ class IPOPMAES():
         population = initial_population
 
         while population < initial_population * self.max_population_size:
-            result = MAES(N, population).calculate(y, sigma, fun, max_iterations)
+            result = MAES(N, population, self.seed).calculate(y, sigma, fun, max_iterations)
             if result < best_result:
                 best_result = result
                 best_population_size = population

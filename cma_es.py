@@ -6,7 +6,8 @@ warnings.filterwarnings('ignore')
 
 class CMAES:
 
-    def __init__(self, N, display_result=False):
+    def __init__(self, N, seed: int, display_result=False):
+        np.random.seed(seed)
         self.display = display_result
         self.N = N
         self.offspring_size = int(4.0 + np.floor(3.0 * np.log(N)))

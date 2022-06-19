@@ -74,24 +74,12 @@ import scipy.optimize  # to define the solver to be benchmarked
 try: import cma
 except: pass  # may not be installed
 
-def random_search(f, lbounds, ubounds, evals):
-    """Won't work (well or at all) for `evals` much larger than 1e5"""
-    [f(x) for x in np.asarray(lbounds) + (np.asarray(ubounds) - lbounds)
-                               * np.random.rand(int(evals), len(ubounds))]
-
-
 def cmaes(x0, problem, max_iterations):
-    return CMAES(len(x0)).calculate(x0, 1, problem, max_iterations)
+    return CMAES(len(x0), 2137).calculate(x0, 1, problem, max_iterations)
 
 def ipop_maes(x0, problem, max_iterations):
-    return IPOPMAES().calculate(x0, 1, problem, max_iterations)
+    return IPOPMAES(2137).calculate(x0, 1, problem, max_iterations)
 
-### input (to be modified if necessary/desired)
-# fmin = scipy.optimize.fmin
-# fmin = scipy.optimize.fmin_slsqp
-# fmin = scipy.optimize.fmin_cobyla
-# fmin = cocoex.solvers.random_search
-#fmin = cma.fmin2
 import sys
 if len(sys.argv) != 2:
     sys.exit("call with exactly 1 argument: cmaes or ipop-maes")
@@ -166,23 +154,6 @@ for batch_counter, problem in enumerate(suite):  # this loop may take hours or d
         # here we assume that `fmin` evaluates the final/returned solution
         if 11 < 3:  # add solver to investigate here
             pass
-        elif fmin is scipy.optimize.fmin:
-            output = fmin(problem, propose_x0(), max_iterations=evalsleft(), disp=False, full_output=True)
-            stoppings[problem.index].append(output[4])
-        elif fmin is scipy.optimize.fmin_slsqp:
-            output = fmin(problem, propose_x0(), iter=int(evalsleft() / problem.dimension + 1),  # very approximate way to respect budget
-                          full_output=True, iprint = -1)
-            # print(problem.dimension, problem.evaluations)
-            stoppings[problem.index].append(output[3:])
-        elif fmin in (cocoex.solvers.random_search, random_search):
-            fmin(problem, problem.lower_bounds, problem.upper_bounds, evalsleft())
-        elif fmin.__name__ == 'fmin2' and 'cma' in fmin.__module__:  # cma.fmin2:
-            xopt, es = fmin(problem, propose_x0, 2,
-                            {'maxfevals':evalsleft(), 'verbose':-9}, restarts=9)
-            stoppings[problem.index].append(es.stop())
-        elif fmin is scipy.optimize.fmin_cobyla:
-            fmin(problem, propose_x0(), lambda x: -problem.constraint(x), max_iterations=evalsleft(),
-                 disp=0, rhoend=1e-9)
         elif fmin is cmaes or fmin is ipop_maes:
             output = fmin(propose_x0(), problem, max_iterations=evalsleft())
             stoppings[problem.index].append(output)
